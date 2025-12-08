@@ -25,7 +25,7 @@ pipeline {
       }
     }
 
-    stage('Push to DockerHub') {
+    stage('Push goto DockerHub') {
   steps {
       script{
           docker_push('notes-app', 'latest', 'rehan088')
