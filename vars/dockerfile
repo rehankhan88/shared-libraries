@@ -1,0 +1,48 @@
+pipeline {
+  agent any
+  stages {
+    stage('Code') {
+      steps {
+        git url: 'https://github.com/rehankhan88/Mydjango-notes-app.git', branch: 'main'
+      }
+    }
+
+    stage('Build') {
+      steps {
+        echo 'Building image'
+        sh 'docker build -t notes-app:latest .'
+      }
+    }
+
+    stage('Push to DockerHub') {
+  steps {
+    echo 'Pushing image to Docker Hub'
+    withCredentials([usernamePassword(credentialsId: 'rehancred',
+                                     usernameVariable: 'dockerHubUser',
+                                     passwordVariable: 'dockerHubPass')]) {
+      sh '''#!/bin/bash
+        set -euo pipefail
+
+        echo "$dockerHubPass" | docker login -u "$dockerHubUser" --password-stdin
+
+        docker image tag notes-app:latest ${dockerHubUser}/notes-app:latest
+        docker push ${dockerHubUser}/notes-app:latest
+
+        docker logout
+      '''
+    }
+  }
+}
+
+
+    stage('Deploy') {
+      steps {
+        sh '''
+          docker stop notes-app 2>/dev/null || true
+          docker rm notes-app 2>/dev/null || true
+          docker compose up -d
+        '''
+      }
+    }
+  }
+}
